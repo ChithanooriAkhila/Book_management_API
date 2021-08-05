@@ -1,4 +1,4 @@
-const books = [
+let books = [
     {
         ISBN: "12345BOOK",
         title: "Getting started with mern",
@@ -9,7 +9,7 @@ const books = [
         publications: [1],
         category: ["tech", "programming", "education", "thriller"],
     },
-    /*{
+    {
         ISBN: "12346BOOK",
         title: "Getting started with fswd",
         pubdate: "2021-07-01",
@@ -18,7 +18,7 @@ const books = [
         author: [1],
         publications: [1],
         category: ["tech", "programming", "education", "thriller"],
-    },*/
+    }
 ];
 
 const author = [
@@ -40,7 +40,13 @@ const publication = [
         id: 1,
         name: "writex",
         books: ["12345BOOK"]
+    },
+    {
+        id: 2,
+        name: "readex",
+        books: [""]
     }
+
 ];
 
 module.exports = { books, author, publication };

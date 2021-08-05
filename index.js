@@ -1,8 +1,13 @@
+const { json } = require("express");
 const express = require("express");
 const database = require("./database");
 
 //initialization
 const booky = express();
+
+//configuration
+booky.use(express.json())
+
 
 /*
 Route        /
@@ -182,5 +187,239 @@ booky.get("/publication/book/:isbn",(req,res)=>{
     return res.json({ publications: getSpecificpublication });
 });
 
+/*
+Route        /book/add
+Description  add new book
+Access       public
+Parameter    NONE
+Methods      POST
+ */
+
+booky.post("/book/add",(req,res) => {
+    const {newBook}=req.body;
+    database.books.push(newBook);
+    return res.json({books:database.books});
+});
+
+/*
+Route        /author/add
+Description  add new author
+Access       public
+Parameter    NONE
+Methods      POST
+ */
+
+booky.post("/author/add",(req,res)=>{
+    const {newAuthor}=req.body;
+    database.author.push(newAuthor);
+    return res.json({authors:database.author});
+});
+
+/*
+Route        /publication/add
+Description  add new publication
+Access       public
+Parameter    NONE
+Methods      POST
+ */
+
+booky.post("/publication/add",(req,res)=>{
+    const {newPublication}=req.body;
+    database.publication.push(newPublication);
+    return res.json({publications:database.publication});
+});
+
+/*
+Route        /book/update/title/:isbn
+Description  update book title
+Access       public
+Parameter    NONE
+Methods      PUT
+ */
+
+booky.put("/book/update/title/:isbn",(req,res)=>{
+    database.books.forEach((book)=>{
+        if(book.ISBN === req.params.isbn){
+            book.title=req.body.newBookTitle;
+            return;
+        }
+    });
+    return res.json({books:database.books});
+});
+
+
+/*
+Route        /book/update/author
+Description  update/add new author for a book
+Access       public
+Parameter    isbn
+Methods      PUT
+ */
+
+booky.put("/book/update/author/:isbn/:authorId",(req,res)=>{
+
+    //update book database
+
+    database.books.forEach((book)=>{
+        if(book.ISBN === req.params.isbn){
+            return book.author.push(parseInt(req.params.authorId));
+        }
+    });
+
+    //update author database
+
+    database.author.forEach((author)=>{
+        if(author.id === parseInt(req.params.authorId)){
+            return author.books.push(req.params.isbn);
+        }
+    });
+
+    return res.json({books:database.books,author:database.author});
+});
+
+/*
+Route        /publication/update/book
+Description  update/add books to publications
+Access       public
+Parameter    isbn
+Methods      PUT
+ */
+
+booky.put("/publication/update/book/:isbn",(req,res)=>{
+    //update the publication database
+    database.publication.forEach((publications) => {
+        if(publications.id === req.body.pubId){
+            return publications.books.push(req.params.isbn);
+        }
+    });
+    //update book database
+    database.books.forEach((book)=>{
+        if(book.ISBN===req.params.isbn){
+            book.publication=req.body.paramId;
+            return;
+        }
+    });
+    return res.json({books:database.books,publications:database.publication,message:"succesfully updated publications"});
+});
+
+/*
+Route        /book/delete
+Description  delete a book
+Access       public
+Parameter    isbn
+Methods      DELETE
+ */
+
+booky.delete("/book/delete/:isbn",(req,res)=>{
+
+    const updatedBookDatabase = database.books.filter((book)=>
+        book.ISBN !==req.params.isbn
+    );
+
+    database.books=updatedBookDatabase;
+    return res.json({books:database.books});
+});
+
+/*
+Route        /book/delete/author
+Description  delete an author from a book
+Access       public
+Parameter    isbn, author id
+Methods      DELETE
+ */
+
+booky.delete("/book/delete/author/:isbn/:authorId",(req,res)=>{
+
+    //update the book databse
+    database.books.forEach((book)=>{
+        if(book.ISBN===req.params.isbn){
+            const newAuthorList=book.author.filter(
+            (authors)=>authors !== parseInt(req.params.authorId)
+        );
+        book.author=newAuthorList;
+        return;
+        }
+    });
+
+    //update author database
+    database.author.forEach((authors)=>{
+        if(authors.id === parseInt(req.params.authorId)){
+            const newBooksList=authors.books.filter(
+            (book)=>book.ISBN !== req.params.isbn
+        );
+        authors.books=newBooksList;
+        return;
+        }
+    });
+    return res.json({message:"author was deleted",book:database.books,author:database.author});
+});
+
+/*
+Route        /author/delete
+Description  delete an author
+Access       public
+Parameter    id
+Methods      DELETE
+ */
+
+booky.delete("/author/delete/:id",(req,res)=>{
+
+    const updatedAuthorDatabase = database.author.filter((authors)=>
+        authors.id !== parseInt(req.params.id)
+    );
+
+    database.author=updatedAuthorDatabase;
+    return res.json({author:database.author});
+});
+
+/*
+Route        /publication/delete
+Description  delete a publication
+Access       public
+Parameter    id
+Methods      DELETE
+ */
+
+booky.delete("/publication/delete/:id",(req,res)=>{
+
+    const updatedPublicationDatabase = database.publication.filter((publication)=>
+        publication.id !== parseInt(req.params.id)
+    );
+
+    database.publication=updatedPublicationDatabase;
+    return res.json({publication:database.publication});
+});
+
+/*
+Route        /publication/delete/book
+Description  delete a book from publication
+Access       public
+Parameter    id, publication id
+Methods      DELETE
+ */
+
+booky.delete("/publication/delete/book/:isbn/:pubId",(req,res)=>{
+
+    //update publication database
+    database.publication.forEach((publications)=>{
+        if(publications.id === parseInt(req.params.pubId)){
+            const newBooksList=publications.books.filter((book)=>book!==req.params.isbn
+        );
+        publications.books=newBooksList;
+        return;
+        }
+    });
+
+    //update book database
+    database.books.forEach((book)=>{
+        if(book.ISBN===req.params.isbn){
+            book.publications=0;
+            return;
+        }
+    })
+    return res.json({books:database.books,publications:database.publication})
+});
+
 booky.listen(3000, () => console.log("hey akhila!! server is running"));
 
+//HTTP client -> helper who helps you to make http request
